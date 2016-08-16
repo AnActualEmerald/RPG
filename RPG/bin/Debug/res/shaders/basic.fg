@@ -1,0 +1,13 @@
+#version 420
+
+in vec2 coord;
+in vec3 pos;
+
+uniform sampler2D sampler;
+
+out vec4 color;
+  
+void main()
+{
+    color = texture2D(sampler, coord);
+}
