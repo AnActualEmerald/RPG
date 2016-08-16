@@ -3,17 +3,31 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL;
 using OpenTK;
+using System.Runtime.InteropServices;
 
 namespace RPG
 {
+	struct Vertex
+	{
+		Vector3 position;
+		public Vertex(Vector3 pos)
+		{
+			position = pos;
+		}
+	}
+
+
 	public class Level : IRenderable, IUpdateable
 	{
 		private List<Tile> Tiles;
 		private Bitmap LevTexture;
 		private int tex_id;
 		private int array_id;
+		private int vert_buffer;
+		private int num_verts;
+		private uint[] ind;
 
 		public Level()
 		{
@@ -25,28 +39,88 @@ namespace RPG
 			Tiles.Add(t);
 		}
 
+		int ind_id;
 		public void InitTexture()
 		{
-			BitmapData bits = LevTexture.LockBits(new Rectangle(0, 0, LevTexture.Width, LevTexture.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+			BitmapData bits = LevTexture.LockBits(new Rectangle(0, 0, LevTexture.Width, LevTexture.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 			tex_id = GL.GenTexture();
 			GL.BindTexture(TextureTarget.Texture2D, tex_id);
-			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, LevTexture.Width, LevTexture.Height, 0,
-			              OpenTK.Graphics.OpenGL4.PixelFormat.Rgb, PixelType.UnsignedByte, bits.Scan0);
+
+			GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
+			GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+
+
+			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, bits.Width, bits.Height, 0,
+			              OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bits.Scan0);
+
+
 			GL.BindTexture(TextureTarget.Texture2D, 0);
 
-			float[] buff = new float[]{
-				0.0f, 0.0f,
-				 LevTexture.Width, 0.0f,
-				 LevTexture.Width, LevTexture.Height,
-				 0.0f, LevTexture.Height};
+			LevTexture.UnlockBits(bits);
+
+			Vector3[] buff = {
+				new Vector3(0, 0, 0),
+				new Vector3(0, LevTexture.Width, 0),
+				new Vector3(LevTexture.Height, LevTexture.Width, 0),
+				new Vector3(LevTexture.Height, 0, 0)};
+
+			ind = new uint[]{
+				0, 1, 2, 0, 3, 2};
+
+
+			int tex_coord;
+			Vector2[] coord = {
+				new Vector2(0, 0),
+				new Vector2(0, 1),
+				new Vector2(1, 1),
+				new Vector2(1, 0)};
+
+			num_verts = buff.Length;
+
+
+			Console.WriteLine("Beginning Buffer Creation");
+
+			GL.GenVertexArrays(1, out array_id);
+			GL.GenBuffers(1, out vert_buffer);
+			GL.GenBuffers(1, out ind_id);
+			GL.GenBuffers(1, out tex_coord);
 
 
 
-			array_id = GL.GenBuffer();
-			GL.BindBuffer(BufferTarget.ArrayBuffer, array_id);
-			GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)buff.Length, buff, BufferUsageHint.StaticDraw);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, vert_buffer);
+			GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(Vector3.SizeInBytes * buff.Length), buff, BufferUsageHint.StaticDraw);
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, tex_coord);
+			GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(Vector2.SizeInBytes * coord.Length), coord, BufferUsageHint.StaticDraw);
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, ind_id);
+			GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(uint) * ind.Length), ind, BufferUsageHint.StaticDraw);
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
+
+			GL.BindVertexArray(array_id);
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, vert_buffer);
+			GL.EnableVertexAttribArray(0);
+			GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, tex_coord);
+			GL.EnableVertexAttribArray(1);
+			GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, ind_id);
+
+			GL.BindVertexArray(0);
+
+			Console.WriteLine("Done");
+
+			ErrorCode e = GL.GetError();
+			Console.WriteLine(e);
 		}
 
 		public static Level BuildNewLevel(string path)
@@ -81,16 +155,27 @@ namespace RPG
 				g.DrawImage(t.Texture, t.Position.X*Tile.TILE_SIZE, t.Position.Y*Tile.TILE_SIZE);
 			}
 			g.Dispose();
-
+			nl.InitTexture();
 			return nl;
 		}
 
 		public void Render()
 		{
-			//GL.BindTexture(TextureTarget.Texture2D, tex_id);
-			GL.BindBuffer(BufferTarget.ArrayBuffer, array_id);
-			GL.DrawArrays(PrimitiveType.Quads, 0, 4);
-			GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+			//GL.EnableClientState(ArrayCap.VertexArray);
+			//GL.EnableClientState(ArrayCap.IndexArray);
+			GL.EnableClientState(ArrayCap.TextureCoordArray);
+			GL.ActiveTexture(TextureUnit.Texture0);
+			GL.BindTexture(TextureTarget.Texture2D, tex_id);
+			GL.BindVertexArray(array_id);
+
+			GL.DrawElements(PrimitiveType.Triangles, ind.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
+
+			GL.BindVertexArray(0);
+			GL.BindTexture(TextureTarget.Texture2D, 0);
+			//GL.DisableClientState(ArrayCap.VertexArray);
+			//GL.DisableClientState(ArrayCap.IndexArray);
+
 		}
 
 		public void Update()

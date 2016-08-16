@@ -24,9 +24,14 @@ namespace RPG
 			stream.Close();
 		}
 
-		public int UniformLocation(string name)
+		public int GetUniformLocation(string name)
 		{
 			return GL.GetUniformLocation(prog, name);
+		}
+
+		public int GetAttribLocation(string name)
+		{
+			return GL.GetAttribLocation(prog, name);
 		}
 
 		public Shader Compile()
@@ -46,7 +51,12 @@ namespace RPG
 			prog = GL.CreateProgram();
 			GL.AttachShader(prog, vrt);
 			GL.AttachShader(prog, frg);
+
 			GL.LinkProgram(prog);
+
+
+			GL.BindAttribLocation(prog, 0, "position");
+			GL.BindAttribLocation(prog, 1, "texCoord");
 
 			GL.DeleteShader(vrt);
 			GL.DeleteShader(frg);
