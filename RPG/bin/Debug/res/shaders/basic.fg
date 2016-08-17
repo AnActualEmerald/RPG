@@ -1,13 +1,11 @@
-#version 420
+#version 120
 
-in vec2 coord;
-in vec3 pos;
+varying vec2 coord;
+varying vec3 pos;
 
 uniform sampler2D sampler;
-
-out vec4 color;
   
 void main()
 {
-    color = texture2D(sampler, coord);
+    gl_FragColor = texture2D(sampler, coord);
 }

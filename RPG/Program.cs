@@ -12,6 +12,8 @@ namespace RPG
 		Level[] levels;
 		Level Active;
 		Shader s;
+		Camera cam;
+
 
 		Matrix4 projection;
 		public static Matrix4 modelview;
@@ -38,6 +40,9 @@ namespace RPG
 			ShaderInit();
 			s.Use();
 		
+			cam = new Camera (0, 0, 0);
+
+			cam.Update ();
 			Matrix4.CreateOrthographicOffCenter(0, window.Width, window.Height, 0, -1, 1, out projection);
 
 			GL.UniformMatrix4(s.GetUniformLocation("projection"), false, ref projection);
@@ -62,6 +67,8 @@ namespace RPG
 		private void Update(object sender, EventArgs e)
 		{
 			Active.Update();
+			cam.Move (-2, 0, 0);
+			cam.Update ();
 			GL.UniformMatrix4(s.GetUniformLocation("model_view"), false, ref modelview);
 		}
 

@@ -33,7 +33,8 @@
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="OpenTK">
-      <HintPath>..\..\..\OpenTK\1.1\Binaries\OpenTK\Release\OpenTK.dll</HintPath>
+      <HintPath>..\..\OpenTK\Binaries\OpenTK\Release\OpenTK.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +45,7 @@
     <Compile Include="IRenderable.cs" />
     <Compile Include="IUpdateable.cs" />
     <Compile Include="Shader.cs" />
+    <Compile Include="Camera.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
