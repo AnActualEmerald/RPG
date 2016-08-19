@@ -33,15 +33,20 @@ namespace RPG
 
 		private void Init(object sender, EventArgs e)
 		{
+			Console.WriteLine("begin init");
+
 			GL.Viewport(0, 0, window.Width, window.Height);
+			Console.WriteLine("load levels");
 			levels = new Level[1];
 			levels[0] = Level.BuildNewLevel("./res/levels/test.png");
 			Active = levels[0];
+			Console.WriteLine("load shaders");
 			ShaderInit();
 			s.Use();
 		
 			cam = new Camera (0, 0, 0);
 
+			Console.WriteLine("Load matrices");
 			cam.Update ();
 			Matrix4.CreateOrthographicOffCenter(0, window.Width, window.Height, 0, -1, 1, out projection);
 
@@ -67,7 +72,7 @@ namespace RPG
 		private void Update(object sender, EventArgs e)
 		{
 			Active.Update();
-			cam.Move (-2, 0, 0);
+			cam.Move (2, 0, 0);
 			cam.Update ();
 			GL.UniformMatrix4(s.GetUniformLocation("model_view"), false, ref modelview);
 		}

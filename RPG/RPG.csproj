@@ -36,6 +36,9 @@
       <HintPath>..\..\OpenTK\Binaries\OpenTK\Release\OpenTK.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="OpenTK">
+      <HintPath>..\..\..\OpenTK\1.1\Binaries\OpenTK\Release\OpenTK.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -46,6 +49,9 @@
     <Compile Include="IUpdateable.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="AABB.cs" />
+    <Compile Include="Player.cs" />
+    <Compile Include="Texture.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
